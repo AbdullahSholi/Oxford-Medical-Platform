@@ -9,7 +9,6 @@ import {
     DeleteObjectCommand,
     GetObjectCommand,
     HeadBucketCommand,
-    CreateBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
@@ -46,13 +45,11 @@ export class StorageService {
         if (this.initialized) return;
         try {
             await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
-        } catch {
-            try {
-                await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
-                console.log(`📦 Created S3 bucket: ${BUCKET}`);
-            } catch (e) {
-                console.warn(`⚠️ Could not create bucket "${BUCKET}":`, (e as Error).message);
-            }
+            console.log(`📦 Bucket "${BUCKET}" is accessible`);
+        } catch (e) {
+            // R2 buckets must be created via Cloudflare dashboard.
+            // Log warning but don't fail — PutObject may still work.
+            console.warn(`⚠️ HeadBucket check failed for "${BUCKET}":`, (e as Error).message);
         }
         this.initialized = true;
     }
