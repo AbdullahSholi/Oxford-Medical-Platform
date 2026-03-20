@@ -1,0 +1,91 @@
+# ═══════════════════════════════════════════════════════════
+# MedOrder — Render Blueprint (Infrastructure as Code)
+# Deploy all services with one click:
+# https://render.com/deploy?repo=YOUR_GITHUB_REPO_URL
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ── API Server ─────────────────────────────────────────
+  - type: web
+    name: medorder-api
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    region: frankfurt
+    plan: starter
+    healthCheckPath: /api/v1/products?limit=1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_PREFIX
+        value: /api/v1
+      - key: CORS_ORIGINS
+        sync: false  # Set manually
+      - key: DATABASE_URL
+        fromDatabase:
+          name: medorder-db
+          property: connectionString
+      - key: DATABASE_POOL_MIN
+        value: "2"
+      - key: DATABASE_POOL_MAX
+        value: "10"
+      - key: REDIS_URL
+        fromService:
+          name: medorder-redis
+          type: redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRY
+        value: 15m
+      - key: JWT_REFRESH_EXPIRY
+        value: 7d
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: S3_BUCKET
+        value: medorder-uploads
+      - key: S3_REGION
+        value: auto
+      - key: S3_ACCESS_KEY
+        sync: false  # Set manually
+      - key: S3_SECRET_KEY
+        sync: false  # Set manually
+      - key: S3_ENDPOINT
+        sync: false  # Set manually
+      - key: CDN_BASE_URL
+        sync: false  # Set manually
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false  # Set manually (Gmail address)
+      - key: SMTP_PASS
+        sync: false  # Set manually (Gmail App Password)
+      - key: EMAIL_FROM
+        value: noreply@medorder.com
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "100"
+      - key: LOGIN_RATE_LIMIT_MAX
+        value: "5"
+      - key: LOGIN_RATE_LIMIT_WINDOW_MS
+        value: "900000"
+
+databases:
+  # ── PostgreSQL ─────────────────────────────────────────
+  - name: medorder-db
+    plan: starter
+    region: frankfurt
+    postgresMajorVersion: "16"
+
+  # ── Redis ──────────────────────────────────────────────
+  - name: medorder-redis
+    plan: starter
+    region: frankfurt
+    maxmemoryPolicy: allkeys-lru

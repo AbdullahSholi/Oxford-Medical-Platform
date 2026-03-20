@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+**/build/
+**/dist/
+**/.dart_tool/
+
+# Environment (secrets)
+.env
+server/.env
+server/.env.*
+!deploy/.env.production
+
+# Load test artifacts (contains tokens)
+server/load-tests/test-config.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.kilocode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing artifacts
+.playwright-mcp/
+e2e/
+coverage/
+
+# Flutter
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+
+# Misc
+-p/

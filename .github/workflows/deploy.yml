@@ -1,0 +1,47 @@
+# ═══════════════════════════════════════════════════════════
+# MedOrder — CI/CD Pipeline
+# Lint & build check on PRs, Render auto-deploys on merge to main
+# ═══════════════════════════════════════════════════════════
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Lint & Type Check ────────────────────────────────
+  check:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+
+  # ── Trigger Render Deploy (on push to main) ──────────
+  deploy:
+    name: Deploy to Render
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "✅ Render deploy triggered"
+          else
+            echo "ℹ️  No RENDER_DEPLOY_HOOK_URL set — Render auto-deploys from GitHub"
+          fi

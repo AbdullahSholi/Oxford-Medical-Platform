@@ -1,0 +1,118 @@
+# ═══════════════════════════════════════════════════════════
+# MedOrder — Production Docker Compose
+# Run: docker compose -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ── API Server ─────────────────────────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: medorder-server
+    restart: unless-stopped
+    env_file: ./deploy/.env.production
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-medorder}:${DB_PASSWORD:-medorder_secret}@postgres:5432/${DB_NAME:-medorder}?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - medorder-net
+    expose:
+      - "3000"
+
+  # ── PostgreSQL ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: medorder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-medorder}
+      POSTGRES_USER: ${DB_USER:-medorder}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-medorder_secret}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-medorder}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medorder-net
+
+  # ── Redis ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: medorder-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medorder-net
+
+  # ── Nginx Reverse Proxy ────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: medorder-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - server
+    networks:
+      - medorder-net
+
+  # ── Certbot (SSL) ─────────────────────────────────────
+  certbot:
+    image: certbot/certbot
+    container_name: medorder-certbot
+    volumes:
+      - ./deploy/certbot/conf:/etc/letsencrypt
+      - ./deploy/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  # ── Backup (daily pg_dump to local volume) ─────────────
+  backup:
+    image: postgres:16-alpine
+    container_name: medorder-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER:-medorder}
+      PGPASSWORD: ${DB_PASSWORD:-medorder_secret}
+      PGDATABASE: ${DB_NAME:-medorder}
+    volumes:
+      - backups:/backups
+      - ./deploy/scripts/backup.sh:/backup.sh:ro
+      - ./deploy/scripts/crontab:/etc/crontabs/root:ro
+    entrypoint: ["/bin/sh", "-c", "chmod +x /backup.sh && crond -f -l 2"]
+    networks:
+      - medorder-net
+
+volumes:
+  postgres-data:
+  redis-data:
+  backups:
+
+networks:
+  medorder-net:
+    driver: bridge

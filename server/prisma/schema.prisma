@@ -1,0 +1,606 @@
+// ═══════════════════════════════════════════════════════════
+// MedOrder — Prisma Schema
+// Matches Part4_PostgresqlDatabase.md specification exactly
+// ═══════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ════════════════════════════════════════════════════════════
+// ENUMS
+// ════════════════════════════════════════════════════════════
+
+enum DoctorStatus {
+  pending
+  approved
+  rejected
+  suspended
+
+  @@map("doctor_status")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  out_for_delivery
+  delivered
+  cancelled
+
+  @@map("order_status")
+}
+
+enum PaymentMethod {
+  cod
+
+  @@map("payment_method")
+}
+
+enum DiscountType {
+  percentage
+  fixed
+
+  @@map("discount_type")
+}
+
+enum NotificationType {
+  order
+  promotion
+  system
+  approval
+
+  @@map("notification_type")
+}
+
+enum BannerPosition {
+  home_slider
+  category_banner
+  flash_sale
+
+  @@map("banner_position")
+}
+
+// ════════════════════════════════════════════════════════════
+// CORE TABLES
+// ════════════════════════════════════════════════════════════
+
+model Admin {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @map("password_hash") @db.VarChar(255)
+  fullName      String    @map("full_name") @db.VarChar(200)
+  role          String    @default("admin") @db.VarChar(50)
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+  approvedDoctors Doctor[]       @relation("ApprovedBy")
+  refreshTokens   RefreshToken[]
+
+  @@map("admins")
+}
+
+model Doctor {
+  id            String       @id @default(uuid()) @db.Uuid
+  fullName      String       @map("full_name") @db.VarChar(200)
+  email         String       @unique @db.VarChar(255)
+  phone         String       @unique @db.VarChar(20)
+  passwordHash  String       @map("password_hash") @db.VarChar(255)
+  avatarUrl     String?      @map("avatar_url")
+
+  // Professional info
+  clinicName    String       @map("clinic_name") @db.VarChar(300)
+  specialty     String       @db.VarChar(100)
+  city          String       @db.VarChar(100)
+  clinicAddress String       @map("clinic_address")
+
+  // Verification
+  licenseUrl    String       @map("license_url")
+  clinicRegUrl  String?      @map("clinic_reg_url")
+  status        DoctorStatus @default(pending)
+  rejectionReason String?    @map("rejection_reason")
+  approvedAt    DateTime?    @map("approved_at") @db.Timestamptz()
+  approvedBy    String?      @map("approved_by") @db.Uuid
+
+  // Tokens
+  refreshTokenHash String?   @map("refresh_token_hash") @db.VarChar(255)
+  fcmToken      String?      @map("fcm_token")
+
+  // Metadata
+  lastLoginAt   DateTime?    @map("last_login_at") @db.Timestamptz()
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+  approvedByAdmin Admin?           @relation("ApprovedBy", fields: [approvedBy], references: [id])
+  addresses       DoctorAddress[]
+  cart            Cart?
+  orders          Order[]
+  reviews         Review[]
+  notifications   Notification[]
+  wishlist        Wishlist[]
+  stockAlerts     StockAlert[]
+  refreshTokens   RefreshToken[]
+  discountUsage   DiscountUsage[]
+
+  @@index([status], map: "idx_doctors_status")
+  @@index([email], map: "idx_doctors_email")
+  @@index([phone], map: "idx_doctors_phone")
+  @@index([specialty], map: "idx_doctors_specialty")
+  @@index([city], map: "idx_doctors_city")
+  @@map("doctors")
+}
+
+model DoctorAddress {
+  id            String   @id @default(uuid()) @db.Uuid
+  doctorId      String   @map("doctor_id") @db.Uuid
+  label         String   @db.VarChar(50)
+  recipientName String   @map("recipient_name") @db.VarChar(200)
+  phone         String   @db.VarChar(20)
+  city          String   @db.VarChar(100)
+  streetAddress String   @map("street_address")
+  buildingInfo  String?  @map("building_info")
+  landmark      String?
+  latitude      Decimal? @db.Decimal(10, 8)
+  longitude     Decimal? @db.Decimal(11, 8)
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId], map: "idx_doctor_addresses_doctor")
+  @@map("doctor_addresses")
+}
+
+// ════════════════════════════════════════════════════════════
+// PRODUCT CATALOG
+// ════════════════════════════════════════════════════════════
+
+model Category {
+  id          String     @id @default(uuid()) @db.Uuid
+  parentId    String?    @map("parent_id") @db.Uuid
+  name        String     @db.VarChar(200)
+  slug        String     @unique @db.VarChar(200)
+  description String?
+  iconUrl     String?    @map("icon_url")
+  sortOrder   Int        @default(0) @map("sort_order")
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([parentId], map: "idx_categories_parent")
+  @@index([slug], map: "idx_categories_slug")
+  @@index([isActive, sortOrder], map: "idx_categories_active_sort")
+  @@map("categories")
+}
+
+model Brand {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(200)
+  logoUrl     String?  @map("logo_url")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id                String  @id @default(uuid()) @db.Uuid
+  categoryId        String  @map("category_id") @db.Uuid
+  brandId           String? @map("brand_id") @db.Uuid
+  name              String  @db.VarChar(300)
+  slug              String  @unique @db.VarChar(300)
+  description       String
+  sku               String  @unique @db.VarChar(50)
+
+  // Pricing
+  price             Decimal  @db.Decimal(10, 2)
+  salePrice         Decimal? @map("sale_price") @db.Decimal(10, 2)
+  costPrice         Decimal? @map("cost_price") @db.Decimal(10, 2)
+
+  // Stock
+  stock             Int      @default(0)
+  lowStockThreshold Int      @default(10) @map("low_stock_threshold")
+  minOrderQty       Int      @default(1) @map("min_order_qty")
+
+  // Medical details (JSONB)
+  medicalDetails    Json     @default("{}") @map("medical_details")
+
+  // Full-text search vector (populated by DB trigger)
+  searchVector      Unsupported("tsvector")? @map("search_vector")
+
+  // Aggregated stats
+  avgRating         Decimal  @default(0.0) @map("avg_rating") @db.Decimal(2, 1)
+  reviewCount       Int      @default(0) @map("review_count")
+  totalSold         Int      @default(0) @map("total_sold")
+
+  // Status
+  isActive          Boolean  @default(true) @map("is_active")
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+  category          Category          @relation(fields: [categoryId], references: [id])
+  brand             Brand?            @relation(fields: [brandId], references: [id])
+  images            ProductImage[]
+  bulkPricing       BulkPricing[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  reviews           Review[]
+  wishlist          Wishlist[]
+  stockAlerts       StockAlert[]
+  flashSaleProducts FlashSaleProduct[]
+
+  @@index([categoryId], map: "idx_products_category")
+  @@index([brandId], map: "idx_products_brand")
+  @@index([sku], map: "idx_products_sku")
+  @@index([slug], map: "idx_products_slug")
+  @@index([price], map: "idx_products_price")
+  @@index([isActive, createdAt(sort: Desc)], map: "idx_products_active_created")
+  @@index([categoryId, isActive], map: "idx_products_category_active")
+  @@map("products")
+}
+
+model ProductImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  url          String
+  thumbnailUrl String?  @map("thumbnail_url")
+  altText      String?  @map("alt_text") @db.VarChar(300)
+  sortOrder    Int      @default(0) @map("sort_order")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "idx_product_images_product")
+  @@index([productId, isPrimary], map: "idx_product_images_primary")
+  @@map("product_images")
+}
+
+model BulkPricing {
+  id          String   @id @default(uuid()) @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  minQuantity Int      @map("min_quantity")
+  maxQuantity Int?     @map("max_quantity")
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "idx_bulk_pricing_product")
+  @@map("bulk_pricing")
+}
+
+// ════════════════════════════════════════════════════════════
+// SHOPPING & ORDERS
+// ════════════════════════════════════════════════════════════
+
+model Cart {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @unique @map("doctor_id") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  doctor Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  items  CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  cartId    String   @map("cart_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  quantity  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+  @@index([cartId], map: "idx_cart_items_cart")
+  @@map("cart_items")
+}
+
+model Order {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderNumber     String        @unique @map("order_number") @db.VarChar(20)
+  doctorId        String        @map("doctor_id") @db.Uuid
+
+  // Delivery snapshot (JSONB)
+  deliveryAddress Json          @map("delivery_address")
+
+  // Pricing
+  subtotal        Decimal       @db.Decimal(12, 2)
+  discountAmount  Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  deliveryFee     Decimal       @default(0) @map("delivery_fee") @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(12, 2)
+
+  // Payment
+  paymentMethod   PaymentMethod @default(cod) @map("payment_method")
+  isPaid          Boolean       @default(false) @map("is_paid")
+  paidAt          DateTime?     @map("paid_at") @db.Timestamptz()
+
+  // Status
+  status          OrderStatus   @default(pending)
+
+  // Additional
+  notes           String?
+  adminNotes      String?       @map("admin_notes")
+  cancelReason    String?       @map("cancel_reason")
+  cancelledAt     DateTime?     @map("cancelled_at") @db.Timestamptz()
+
+  // Discount reference
+  discountId      String?       @map("discount_id") @db.Uuid
+
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+  doctor          Doctor              @relation(fields: [doctorId], references: [id])
+  discount        Discount?           @relation(fields: [discountId], references: [id])
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+  discountUsage   DiscountUsage[]
+
+  @@index([doctorId], map: "idx_orders_doctor")
+  @@index([status], map: "idx_orders_status")
+  @@index([orderNumber], map: "idx_orders_number")
+  @@index([createdAt(sort: Desc)], map: "idx_orders_created")
+  @@index([doctorId, status], map: "idx_orders_doctor_status")
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+
+  // Snapshot fields
+  productName  String   @map("product_name") @db.VarChar(300)
+  productSku   String   @map("product_sku") @db.VarChar(50)
+  productImage String?  @map("product_image")
+  unitPrice    Decimal  @map("unit_price") @db.Decimal(10, 2)
+  quantity     Int
+  totalPrice   Decimal  @map("total_price") @db.Decimal(12, 2)
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  reviews Review[]
+
+  @@index([orderId], map: "idx_order_items_order")
+  @@index([productId], map: "idx_order_items_product")
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(uuid()) @db.Uuid
+  orderId   String      @map("order_id") @db.Uuid
+  status    OrderStatus
+  notes     String?
+  changedBy String?     @map("changed_by") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_order_history_order")
+  @@map("order_status_history")
+}
+
+// ════════════════════════════════════════════════════════════
+// REVIEWS & RATINGS
+// ════════════════════════════════════════════════════════════
+
+model Review {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  doctorId     String   @map("doctor_id") @db.Uuid
+  orderItemId  String?  @map("order_item_id") @db.Uuid
+  rating       Int      @db.SmallInt
+  title        String?  @db.VarChar(200)
+  body         String?
+  isVerified   Boolean  @default(false) @map("is_verified")
+  isVisible    Boolean  @default(true) @map("is_visible")
+  helpfulCount Int      @default(0) @map("helpful_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  doctor    Doctor     @relation(fields: [doctorId], references: [id])
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id])
+
+  @@unique([doctorId, productId])
+  @@index([productId], map: "idx_reviews_product")
+  @@index([doctorId], map: "idx_reviews_doctor")
+  @@map("reviews")
+}
+
+// ════════════════════════════════════════════════════════════
+// PROMOTIONS & MARKETING
+// ════════════════════════════════════════════════════════════
+
+model Discount {
+  id             String       @id @default(uuid()) @db.Uuid
+  code           String       @unique @db.VarChar(50)
+  description    String?
+  type           DiscountType
+  value          Decimal      @db.Decimal(10, 2)
+  minOrderAmount Decimal?     @map("min_order_amount") @db.Decimal(10, 2)
+  maxDiscount    Decimal?     @map("max_discount") @db.Decimal(10, 2)
+  usageLimit     Int?         @map("usage_limit")
+  perUserLimit   Int          @default(1) @map("per_user_limit")
+  usedCount      Int          @default(0) @map("used_count")
+  startsAt       DateTime     @map("starts_at") @db.Timestamptz()
+  endsAt         DateTime     @map("ends_at") @db.Timestamptz()
+  isActive       Boolean      @default(true) @map("is_active")
+  appliesTo      Json         @default("{\"scope\": \"all\"}") @map("applies_to")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  orders Order[]
+  usage  DiscountUsage[]
+
+  @@index([code], map: "idx_discounts_code")
+  @@index([isActive, startsAt, endsAt], map: "idx_discounts_active_dates")
+  @@map("discounts")
+}
+
+model DiscountUsage {
+  id         String   @id @default(uuid()) @db.Uuid
+  discountId String   @map("discount_id") @db.Uuid
+  doctorId   String   @map("doctor_id") @db.Uuid
+  orderId    String   @map("order_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  discount Discount @relation(fields: [discountId], references: [id])
+  doctor   Doctor   @relation(fields: [doctorId], references: [id])
+  order    Order    @relation(fields: [orderId], references: [id])
+
+  @@index([discountId, doctorId], map: "idx_discount_usage_discount")
+  @@map("discount_usage")
+}
+
+model FlashSale {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String   @db.VarChar(200)
+  bannerUrl String?  @map("banner_url")
+  startsAt  DateTime @map("starts_at") @db.Timestamptz()
+  endsAt    DateTime @map("ends_at") @db.Timestamptz()
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  products FlashSaleProduct[]
+
+  @@map("flash_sales")
+}
+
+model FlashSaleProduct {
+  id          String  @id @default(uuid()) @db.Uuid
+  flashSaleId String  @map("flash_sale_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  flashPrice  Decimal @map("flash_price") @db.Decimal(10, 2)
+  flashStock  Int     @map("flash_stock")
+  soldCount   Int     @default(0) @map("sold_count")
+
+  flashSale FlashSale @relation(fields: [flashSaleId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([flashSaleId, productId])
+  @@index([flashSaleId], map: "idx_flash_sale_products_sale")
+  @@map("flash_sale_products")
+}
+
+model Banner {
+  id        String          @id @default(uuid()) @db.Uuid
+  title     String?         @db.VarChar(200)
+  subtitle  String?
+  imageUrl  String          @map("image_url")
+  linkType  String?         @map("link_type") @db.VarChar(50)
+  linkTarget String?        @map("link_target")
+  position  BannerPosition  @default(home_slider)
+  sortOrder Int             @default(0) @map("sort_order")
+  isActive  Boolean         @default(true) @map("is_active")
+  startsAt  DateTime?       @map("starts_at") @db.Timestamptz()
+  endsAt    DateTime?       @map("ends_at") @db.Timestamptz()
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([isActive, sortOrder], map: "idx_banners_active_sort")
+  @@map("banners")
+}
+
+// ════════════════════════════════════════════════════════════
+// NOTIFICATIONS & ENGAGEMENT
+// ════════════════════════════════════════════════════════════
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  doctorId  String           @map("doctor_id") @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(200)
+  body      String
+  data      Json             @default("{}")
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, createdAt(sort: Desc)], map: "idx_notifications_doctor")
+  @@map("notifications")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @map("doctor_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, productId])
+  @@index([doctorId], map: "idx_wishlist_doctor")
+  @@map("wishlist")
+}
+
+model StockAlert {
+  id          String   @id @default(uuid()) @db.Uuid
+  doctorId    String   @map("doctor_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  notifyPush  Boolean  @default(true) @map("notify_push")
+  notifyEmail Boolean  @default(false) @map("notify_email")
+  notifySms   Boolean  @default(false) @map("notify_sms")
+  isNotified  Boolean  @default(false) @map("is_notified")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, productId])
+  @@map("stock_alerts")
+}
+
+// ════════════════════════════════════════════════════════════
+// AUDIT & SYSTEM
+// ════════════════════════════════════════════════════════════
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String?  @map("doctor_id") @db.Uuid
+  adminId   String?  @map("admin_id") @db.Uuid
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  familyId  String   @map("family_id") @db.Uuid
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  doctor Doctor? @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  admin  Admin?  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId], map: "idx_refresh_tokens_doctor")
+  @@index([familyId], map: "idx_refresh_tokens_family")
+  @@map("refresh_tokens")
+}

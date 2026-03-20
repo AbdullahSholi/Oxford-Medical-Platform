@@ -1,0 +1,80 @@
+# ═══════════════════════════════════════════════════
+# MedOrder — Docker Compose for Local Development
+# PostgreSQL + Redis + MinIO (S3-compatible)
+# ═══════════════════════════════════════════════════
+
+services:
+  # ── PostgreSQL ─────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: medorder-postgres
+    restart: unless-stopped
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: medorder
+      POSTGRES_PASSWORD: medorder_secret
+      POSTGRES_DB: medorder
+    volumes:
+      - postgres_data_v2:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U medorder']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: medorder-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --maxmemory 256mb --maxmemory-policy noeviction
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (S3-compatible object storage) ───────
+  minio:
+    image: minio/minio:latest
+    container_name: medorder-minio
+    restart: unless-stopped
+    ports:
+      - '9000:9000'     # API
+      - '9001:9001'     # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── BullBoard (Job Queue Dashboard — optional) ─
+  # Uncomment to enable a web UI for viewing BullMQ jobs
+  # bullboard:
+  #   image: deadly0/bull-board:latest
+  #   container_name: medorder-bullboard
+  #   restart: unless-stopped
+  #   ports:
+  #     - '3100:3000'
+  #   environment:
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+
+volumes:
+  postgres_data_v2:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
