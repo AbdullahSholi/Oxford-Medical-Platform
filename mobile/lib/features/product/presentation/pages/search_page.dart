@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -43,31 +44,84 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: context.l10n.homeSearch,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 0,
+        title: Container(
+          height: 44,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
-          onChanged: (query) {
-            context.read<SearchBloc>().add(SearchQueryChanged(query));
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              _controller.clear();
-              context.read<SearchBloc>().add(const SearchCleared());
+          child: TextField(
+            controller: _controller,
+            autofocus: true,
+            style: const TextStyle(fontSize: 15),
+            decoration: InputDecoration(
+              hintText: context.l10n.homeSearch,
+              hintStyle: const TextStyle(
+                color: AppColors.textHint,
+                fontSize: 14,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 20),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _controller,
+                builder: (_, value, __) {
+                  if (value.text.isEmpty) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textTertiary),
+                    onPressed: () {
+                      _controller.clear();
+                      context.read<SearchBloc>().add(const SearchCleared());
+                    },
+                  );
+                },
+              ),
+            ),
+            onChanged: (query) {
+              context.read<SearchBloc>().add(SearchQueryChanged(query));
             },
           ),
-        ],
+        ),
       ),
       body: BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {
+          if (state is SearchInitial) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySurface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.search_rounded, size: 40, color: AppColors.primary),
+                  ),
+                  AppSpacing.verticalGapLg,
+                  const Text(
+                    'Search for products',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  AppSpacing.verticalGapSm,
+                  const Text(
+                    'Find medical supplies & equipment',
+                    style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+                  ),
+                ],
+              ),
+            );
+          }
           if (state is SearchLoading) return const AppLoading();
           if (state is SearchEmpty) {
             return AppEmptyState(
@@ -76,7 +130,12 @@ class _SearchPageState extends State<SearchPage> {
             );
           }
           if (state is SearchError) {
-            return Center(child: Text(state.message));
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            );
           }
           if (state is SearchResults) {
             return GridView.builder(
@@ -91,7 +150,12 @@ class _SearchPageState extends State<SearchPage> {
               itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
               itemBuilder: (context, index) {
                 if (index >= state.products.length) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
                 }
                 final product = state.products[index];
                 return ProductCard(

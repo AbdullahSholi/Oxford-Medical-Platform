@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/product_card.dart';
@@ -24,20 +25,50 @@ class BestSellersSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                context.l10n.homeBestSellers,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                     ),
+                    child: const Icon(Icons.trending_up_rounded, color: AppColors.primary, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    context.l10n.homeBestSellers,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
               ),
               TextButton(
                 onPressed: () => context.push('/products?sort=bestSelling'),
-                child: Text(context.l10n.homeViewAll),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      context.l10n.homeViewAll,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_rounded, size: 16),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        AppSpacing.verticalGapSm,
+        AppSpacing.verticalGapMd,
         GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           shrinkWrap: true,

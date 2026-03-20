@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -96,80 +99,115 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: false,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
+              // Personal section
+              _SectionHeader(title: 'Personal Information', icon: Icons.person_outline_rounded),
+              AppSpacing.verticalGapLg,
+              AppTextField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
+                label: 'Full Name',
+                prefixIcon: const Icon(Icons.person_outlined),
                 validator: (v) => v == null || v.trim().length < 3
                     ? 'Name must be at least 3 characters'
                     : null,
               ),
-              AppSpacing.verticalGapMd,
-              TextFormField(
+              AppSpacing.verticalGapLg,
+              AppTextField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                  hintText: '+201234567890',
-                ),
+                label: 'Phone',
+                hint: '+201234567890',
+                prefixIcon: const Icon(Icons.phone_outlined),
                 keyboardType: TextInputType.phone,
               ),
-              AppSpacing.verticalGapMd,
-              TextFormField(
+              AppSpacing.verticalGapXl,
+
+              // Professional section
+              _SectionHeader(title: 'Professional Details', icon: Icons.medical_services_outlined),
+              AppSpacing.verticalGapLg,
+              AppTextField(
                 controller: _specialtyController,
-                decoration: const InputDecoration(
-                  labelText: 'Specialty',
-                  prefixIcon: Icon(Icons.medical_services_outlined),
-                ),
-              ),
-              AppSpacing.verticalGapMd,
-              TextFormField(
-                controller: _clinicNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Clinic Name',
-                  prefixIcon: Icon(Icons.local_hospital_outlined),
-                ),
-              ),
-              AppSpacing.verticalGapMd,
-              TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(
-                  labelText: 'City',
-                  prefixIcon: Icon(Icons.location_city_outlined),
-                ),
-              ),
-              AppSpacing.verticalGapMd,
-              TextFormField(
-                controller: _clinicAddressController,
-                decoration: const InputDecoration(
-                  labelText: 'Clinic Address',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                ),
-                maxLines: 2,
+                label: 'Specialty',
+                prefixIcon: const Icon(Icons.medical_services_outlined),
               ),
               AppSpacing.verticalGapXl,
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _saving ? null : _save,
-                  child: _saving
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Save Changes'),
-                ),
+
+              // Clinic section
+              _SectionHeader(title: 'Clinic Information', icon: Icons.local_hospital_outlined),
+              AppSpacing.verticalGapLg,
+              AppTextField(
+                controller: _clinicNameController,
+                label: 'Clinic Name',
+                prefixIcon: const Icon(Icons.local_hospital_outlined),
               ),
+              AppSpacing.verticalGapLg,
+              AppTextField(
+                controller: _cityController,
+                label: 'City',
+                prefixIcon: const Icon(Icons.location_city_outlined),
+              ),
+              AppSpacing.verticalGapLg,
+              AppTextField(
+                controller: _clinicAddressController,
+                label: 'Clinic Address',
+                prefixIcon: const Icon(Icons.location_on_outlined),
+                maxLines: 2,
+              ),
+              AppSpacing.verticalGapXxl,
+              AppButton(
+                label: 'Save Changes',
+                variant: AppButtonVariant.gradient,
+                isLoading: _saving,
+                onPressed: _saving ? null : _save,
+              ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionHeader({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

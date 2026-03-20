@@ -21,21 +21,28 @@ class CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.divider),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        boxShadow: AppSpacing.shadowSm,
       ),
       child: Row(
         children: [
-          AppCachedImage(
-            imageUrl: item.productImage,
-            width: 80,
-            height: 80,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          // Product image
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              color: AppColors.surfaceVariant,
+            ),
+            child: AppCachedImage(
+              imageUrl: item.productImage,
+              width: 88,
+              height: 88,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
           ),
-          AppSpacing.horizontalGapMd,
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,28 +51,46 @@ class CartItemCard extends StatelessWidget {
                   item.productName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                AppSpacing.verticalGapSm,
-                Text(
-                  Formatters.price(item.price),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    letterSpacing: -0.2,
+                    height: 1.3,
                   ),
                 ),
-                AppSpacing.verticalGapSm,
+                const SizedBox(height: 8),
+                Text(
+                  Formatters.price(item.price),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     QuantitySelector(
                       quantity: item.quantity,
                       onChanged: onQuantityChanged,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
-                      onPressed: onRemove,
+                    const Spacer(),
+                    Material(
+                      color: AppColors.errorLight,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      child: InkWell(
+                        onTap: onRemove,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.error,
+                            size: 18,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

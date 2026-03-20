@@ -66,12 +66,12 @@ flutter:
   uses-material-design: true
   generate: true
 
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/svg/
-
   fonts:
+    - family: PublicSans
+      fonts:
+        - asset: assets/fonts/PublicSans-Variable.ttf
+        - asset: assets/fonts/PublicSans-Italic-Variable.ttf
+          style: italic
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Light.ttf

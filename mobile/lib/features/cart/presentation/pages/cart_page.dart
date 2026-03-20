@@ -19,7 +19,13 @@ class CartPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.cartTitle)),
+      appBar: AppBar(
+        title: Text(
+          context.l10n.cartTitle,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: false,
+      ),
       body: BlocBuilder<CartBloc, CartState>(
         builder: (context, state) {
           if (state is CartInitial) {
@@ -45,6 +51,7 @@ class CartPage extends StatelessWidget {
             }
             return Column(
               children: [
+                // Items list
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.all(AppSpacing.lg),
@@ -68,34 +75,64 @@ class CartPage extends StatelessWidget {
                     },
                   ),
                 ),
-                // Order summary
+                // Modern order summary
                 Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  decoration: BoxDecoration(
                     color: AppColors.surface,
-                    border: Border(top: BorderSide(color: AppColors.divider)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppSpacing.radiusXl),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 20,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
                   ),
                   child: SafeArea(
                     child: Column(
                       children: [
+                        // Drag handle
+                        Center(
+                          child: Container(
+                            width: 36,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.divider,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                         // Coupon row
                         if (cart.couponCode == null)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                             child: _CouponInput(
                               onApply: (code) => context
                                   .read<CartBloc>()
                                   .add(CartCouponApplied(code)),
                             ),
                           ),
-                        _SummaryRow(label: context.l10n.cartSubtotal, value: Formatters.price(cart.subtotal)),
+                        _SummaryRow(
+                          label: context.l10n.cartSubtotal,
+                          value: Formatters.price(cart.subtotal),
+                        ),
                         if (cart.discount > 0)
                           _SummaryRow(
                             label: 'Discount',
                             value: '-${Formatters.price(cart.discount)}',
                             valueColor: AppColors.success,
                           ),
-                        const Divider(height: AppSpacing.lg),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(
+                            color: AppColors.divider,
+                            height: 1,
+                          ),
+                        ),
                         _SummaryRow(
                           label: context.l10n.cartTotal,
                           value: Formatters.price(cart.total),
@@ -104,6 +141,7 @@ class CartPage extends StatelessWidget {
                         AppSpacing.verticalGapLg,
                         AppButton(
                           label: context.l10n.cartCheckout,
+                          variant: AppButtonVariant.gradient,
                           onPressed: () => context.push('/checkout'),
                         ),
                       ],
@@ -136,27 +174,48 @@ class _CouponInputState extends State<_CouponInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: AppTextField(
-            controller: _controller,
-            hint: context.l10n.checkoutCoupon,
-            maxLines: 1,
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          const Icon(Icons.local_offer_outlined, size: 18, color: AppColors.textTertiary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: context.l10n.checkoutCoupon,
+                hintStyle: const TextStyle(fontSize: 14, color: AppColors.textHint),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
           ),
-        ),
-        AppSpacing.horizontalGapSm,
-        AppButton(
-          label: 'Apply',
-          variant: AppButtonVariant.secondary,
-          width: 80,
-          onPressed: () {
-            if (_controller.text.trim().isNotEmpty) {
-              widget.onApply(_controller.text.trim());
-            }
-          },
-        ),
-      ],
+          TextButton(
+            onPressed: () {
+              if (_controller.text.trim().isNotEmpty) {
+                widget.onApply(_controller.text.trim());
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text('Apply', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -177,12 +236,26 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.w700 : FontWeight.w400, fontSize: isBold ? 16 : 14)),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.w700 : FontWeight.w500, fontSize: isBold ? 16 : 14, color: valueColor)),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+              fontSize: isBold ? 16 : 14,
+              color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              fontSize: isBold ? 18 : 14,
+              color: valueColor ?? (isBold ? AppColors.primary : AppColors.textPrimary),
+            ),
+          ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_error_widget.dart';
@@ -53,25 +54,21 @@ class _ProductListPageState extends State<ProductListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title ?? 'Products'),
+        title: Text(
+          widget.title ?? 'Products',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
+          _AppBarAction(
+            icon: Icons.filter_list_rounded,
             onPressed: () => _showFilterSheet(context),
           ),
-          PopupMenuButton<SortOption>(
-            icon: const Icon(Icons.sort_rounded),
-            onSelected: (sort) {
-              context.read<ProductListBloc>().add(ProductListSortChanged(sort));
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: SortOption.newest, child: Text('Newest')),
-              PopupMenuItem(value: SortOption.priceAsc, child: Text('Price: Low to High')),
-              PopupMenuItem(value: SortOption.priceDesc, child: Text('Price: High to Low')),
-              PopupMenuItem(value: SortOption.rating, child: Text('Top Rated')),
-              PopupMenuItem(value: SortOption.bestSelling, child: Text('Best Selling')),
-            ],
+          _AppBarAction(
+            icon: Icons.sort_rounded,
+            onPressed: () => _showSortMenu(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: BlocBuilder<ProductListBloc, ProductListState>(
@@ -104,7 +101,12 @@ class _ProductListPageState extends State<ProductListPage> {
               itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
               itemBuilder: (context, index) {
                 if (index >= state.products.length) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
                 }
                 final product = state.products[index];
                 return ProductCard(
@@ -116,6 +118,55 @@ class _ProductListPageState extends State<ProductListPage> {
           }
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  void _showSortMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 16),
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Text(
+              'Sort by',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            ...[
+              (SortOption.newest, 'Newest', Icons.schedule_rounded),
+              (SortOption.priceAsc, 'Price: Low to High', Icons.arrow_upward_rounded),
+              (SortOption.priceDesc, 'Price: High to Low', Icons.arrow_downward_rounded),
+              (SortOption.rating, 'Top Rated', Icons.star_rounded),
+              (SortOption.bestSelling, 'Best Selling', Icons.trending_up_rounded),
+            ].map((item) => ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Icon(item.$3, color: AppColors.primary, size: 18),
+              ),
+              title: Text(item.$2, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.read<ProductListBloc>().add(ProductListSortChanged(item.$1));
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -141,6 +192,32 @@ class _ProductListPageState extends State<ProductListPage> {
         onApply: (filter) {
           bloc.add(ProductListFilterChanged(filter));
         },
+      ),
+    );
+  }
+}
+
+class _AppBarAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _AppBarAction({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+        child: IconButton(
+          icon: Icon(icon, size: 20, color: AppColors.textPrimary),
+          onPressed: onPressed,
+          padding: const EdgeInsets.all(8),
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        ),
       ),
     );
   }

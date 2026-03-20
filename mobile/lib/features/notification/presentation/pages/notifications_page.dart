@@ -28,27 +28,42 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.notificationsTitle),
+        title: Text(
+          context.l10n.notificationsTitle,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: false,
         actions: [
-          TextButton(
+          TextButton.icon(
             onPressed: () => context.read<NotificationBloc>().add(const NotificationsAllMarkedRead()),
-            child: const Text('Mark all read'),
+            icon: const Icon(Icons.done_all_rounded, size: 18),
+            label: const Text('Mark all read', style: TextStyle(fontSize: 13)),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) return const AppLoading();
           if (state is NotificationError) {
-            return AppErrorWidget(message: state.message, onRetry: () => context.read<NotificationBloc>().add(const NotificationsFetched()));
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => context.read<NotificationBloc>().add(const NotificationsFetched()),
+            );
           }
           if (state is NotificationLoaded) {
             if (state.notifications.isEmpty) {
-              return AppEmptyState(title: context.l10n.notificationsEmpty, icon: Icons.notifications_off_outlined);
+              return AppEmptyState(
+                title: context.l10n.notificationsEmpty,
+                icon: Icons.notifications_off_outlined,
+              );
             }
-            return ListView.separated(
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               itemCount: state.notifications.length,
-              separatorBuilder: (_, __) => const Divider(height: 0),
               itemBuilder: (context, index) {
                 final n = state.notifications[index];
                 return Dismissible(
@@ -56,30 +71,120 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   direction: DismissDirection.endToStart,
                   background: Container(
                     alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: AppSpacing.lg),
-                    color: AppColors.error,
-                    child: const Icon(Icons.delete_outline, color: Colors.white),
+                    padding: const EdgeInsets.only(right: AppSpacing.xl),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.errorLight,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: AppColors.error),
                   ),
                   onDismissed: (_) {
                     context.read<NotificationBloc>().add(NotificationDeleted(n.id));
                     context.showSnackBar('Notification deleted');
                   },
-                  child: ListTile(
-                  tileColor: n.isRead ? null : AppColors.primaryLight.withOpacity(0.05),
-                  leading: CircleAvatar(
-                    backgroundColor: n.isRead ? AppColors.surfaceVariant : AppColors.primaryLight.withOpacity(0.2),
-                    child: Icon(_iconForType(n.type), size: 20, color: n.isRead ? AppColors.textHint : AppColors.primary),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: n.isRead ? AppColors.surface : AppColors.primarySurface,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      border: n.isRead
+                          ? Border.all(color: AppColors.divider, width: 1)
+                          : Border.all(color: AppColors.primaryLight.withOpacity(0.3), width: 1),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (!n.isRead) context.read<NotificationBloc>().add(NotificationMarkedRead(n.id));
+                          final orderId = n.data?['orderId'] as String?;
+                          if (orderId != null) context.push('/orders/$orderId');
+                        },
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Icon
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: n.isRead
+                                      ? AppColors.surfaceVariant
+                                      : AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                ),
+                                child: Icon(
+                                  _iconForType(n.type),
+                                  size: 20,
+                                  color: n.isRead ? AppColors.textTertiary : AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              // Content
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            n.title,
+                                            style: TextStyle(
+                                              fontWeight: n.isRead ? FontWeight.w500 : FontWeight.w600,
+                                              fontSize: 14,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ),
+                                        if (!n.isRead)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      n.body,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      n.createdAt.timeAgo,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textHint,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.w400 : FontWeight.w600, fontSize: 14)),
-                  subtitle: Text(n.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
-                  trailing: Text(n.createdAt.timeAgo, style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                  onTap: () {
-                    if (!n.isRead) context.read<NotificationBloc>().add(NotificationMarkedRead(n.id));
-                    final orderId = n.data?['orderId'] as String?;
-                    if (orderId != null) context.push('/orders/$orderId');
-                  },
-                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
-                ),
                 );
               },
             );

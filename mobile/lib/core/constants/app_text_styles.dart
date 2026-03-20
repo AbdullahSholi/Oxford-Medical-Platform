@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 abstract final class AppTextStyles {
-  static const _fontFamily = 'Inter';
+  static const _fontFamily = 'PublicSans';
 
-  // Headings
+  // Headings — tighter letter-spacing for modern feel
   static const h1 = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
-    height: 1.3,
+    height: 1.2,
+    letterSpacing: -0.5,
   );
 
   static const h2 = TextStyle(
@@ -18,7 +19,8 @@ abstract final class AppTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
-    height: 1.3,
+    height: 1.25,
+    letterSpacing: -0.4,
   );
 
   static const h3 = TextStyle(
@@ -26,7 +28,8 @@ abstract final class AppTextStyles {
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
-    height: 1.4,
+    height: 1.3,
+    letterSpacing: -0.3,
   );
 
   static const h4 = TextStyle(
@@ -34,7 +37,8 @@ abstract final class AppTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
-    height: 1.4,
+    height: 1.3,
+    letterSpacing: -0.2,
   );
 
   // Body
@@ -69,6 +73,7 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     height: 1.4,
+    letterSpacing: -0.1,
   );
 
   static const labelMedium = TextStyle(
@@ -94,6 +99,7 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textOnPrimary,
     height: 1.2,
+    letterSpacing: 0.2,
   );
 
   // Price
@@ -103,6 +109,7 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w700,
     color: AppColors.primary,
     height: 1.2,
+    letterSpacing: -0.3,
   );
 
   static const priceStrikethrough = TextStyle(
@@ -111,6 +118,7 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.textHint,
     decoration: TextDecoration.lineThrough,
+    decorationColor: AppColors.textHint,
     height: 1.2,
   );
 }

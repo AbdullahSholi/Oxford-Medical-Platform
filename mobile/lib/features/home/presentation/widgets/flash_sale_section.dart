@@ -24,21 +24,44 @@ class FlashSaleSection extends StatelessWidget {
       children: [
         Padding(
           padding: AppSpacing.pagePadding,
-          child: Row(
-            children: [
-              const Icon(Icons.flash_on_rounded,
-                  color: AppColors.flashSale, size: 22),
-              AppSpacing.horizontalGapSm,
-              Text(
-                context.l10n.homeFlashSale,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: AppColors.accentGradient,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: const Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    context.l10n.homeFlashSale,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.flashSale,
+                      fontSize: 16,
+                      color: Colors.white,
+                      letterSpacing: -0.2,
                     ),
-              ),
-              const Spacer(),
-              CountdownTimer(endTime: flashSale.endTime),
-            ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                  ),
+                  child: CountdownTimer(endTime: flashSale.endTime),
+                ),
+              ],
+            ),
           ),
         ),
         AppSpacing.verticalGapMd,

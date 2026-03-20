@@ -16,12 +16,12 @@ class StatusBadge extends StatelessWidget {
 
   factory StatusBadge.orderStatus(String status) {
     final (bgColor, fgColor) = switch (status.toLowerCase()) {
-      'pending' => (AppColors.statusPending.withOpacity(0.15), AppColors.statusPending),
-      'confirmed' => (AppColors.statusConfirmed.withOpacity(0.15), AppColors.statusConfirmed),
-      'processing' => (AppColors.info.withOpacity(0.15), AppColors.info),
-      'shipped' => (AppColors.statusShipped.withOpacity(0.15), AppColors.statusShipped),
-      'delivered' => (AppColors.statusDelivered.withOpacity(0.15), AppColors.statusDelivered),
-      'cancelled' => (AppColors.statusCancelled.withOpacity(0.15), AppColors.statusCancelled),
+      'pending' => (AppColors.warningLight, AppColors.statusPending),
+      'confirmed' => (AppColors.infoLight, AppColors.statusConfirmed),
+      'processing' => (AppColors.infoLight, AppColors.info),
+      'shipped' => (const Color(0xFFF3E8FF), AppColors.statusShipped),
+      'delivered' => (AppColors.successLight, AppColors.statusDelivered),
+      'cancelled' => (AppColors.errorLight, AppColors.statusCancelled),
       _ => (AppColors.surfaceVariant, AppColors.textSecondary),
     };
     return StatusBadge(label: status, color: bgColor, textColor: fgColor);
@@ -31,19 +31,20 @@ class StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
+        horizontal: 10,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
-        color: color ?? AppColors.primaryLight.withOpacity(0.15),
+        color: color ?? AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: textColor ?? AppColors.primary,
+          letterSpacing: 0.2,
         ),
       ),
     );

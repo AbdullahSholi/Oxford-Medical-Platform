@@ -28,36 +28,37 @@ class ProductCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: AppColors.divider),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          boxShadow: AppSpacing.shadowSm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // Image with overlays
             Stack(
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppSpacing.radiusMd),
+                    top: Radius.circular(AppSpacing.radiusLg),
                   ),
                   child: AppCachedImage(
                     imageUrl: product.imageUrl,
-                    height: 140,
+                    height: 150,
                     width: double.infinity,
                   ),
                 ),
+                // Discount badge
                 if (product.discountPercentage != null)
                   Positioned(
-                    top: AppSpacing.sm,
-                    left: AppSpacing.sm,
+                    top: 10,
+                    left: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error,
+                        gradient: AppColors.accentGradient,
                         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                       ),
                       child: Text(
@@ -70,37 +71,60 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                // Wishlist button
                 if (onToggleWishlist != null)
                   Positioned(
-                    top: AppSpacing.sm,
-                    right: AppSpacing.sm,
+                    top: 10,
+                    right: 10,
                     child: GestureDetector(
                       onTap: onToggleWishlist,
                       child: Container(
-                        padding: const EdgeInsets.all(AppSpacing.xs),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppColors.surface.withOpacity(0.9),
+                          color: AppColors.surface,
                           shape: BoxShape.circle,
+                          boxShadow: AppSpacing.shadowSm,
                         ),
                         child: Icon(
                           isInWishlist
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
-                          size: 20,
-                          color: isInWishlist ? AppColors.error : AppColors.textHint,
+                          size: 18,
+                          color: isInWishlist ? AppColors.error : AppColors.textTertiary,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Out of stock overlay
+                if (!product.inStock)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.6),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(AppSpacing.radiusLg),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Out of Stock',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.error,
+                          ),
                         ),
                       ),
                     ),
                   ),
               ],
             ),
-            // Details
+            // Product details
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       product.name,
@@ -110,37 +134,30 @@ class ProductCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         height: 1.3,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    AppSpacing.verticalGapXs,
+                    const Spacer(),
                     if (product.originalPrice != null &&
-                        product.originalPrice != product.price) ...[
+                        product.originalPrice != product.price)
                       Text(
                         Formatters.price(product.originalPrice!),
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textHint,
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
                           decoration: TextDecoration.lineThrough,
+                          decorationColor: AppColors.textTertiary,
                         ),
                       ),
-                    ],
                     Text(
                       Formatters.price(product.price),
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
+                        letterSpacing: -0.3,
                       ),
                     ),
-                    if (!product.inStock)
-                      const Text(
-                        'Out of Stock',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.error,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
                   ],
                 ),
               ),

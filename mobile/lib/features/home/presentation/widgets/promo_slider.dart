@@ -14,7 +14,7 @@ class PromoSlider extends StatefulWidget {
 }
 
 class _PromoSliderState extends State<PromoSlider> {
-  final _controller = PageController();
+  final _controller = PageController(viewportFraction: 0.88);
   int _currentPage = 0;
 
   @override
@@ -30,7 +30,7 @@ class _PromoSliderState extends State<PromoSlider> {
     return Column(
       children: [
         SizedBox(
-          height: 160,
+          height: 180,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.banners.length,
@@ -38,33 +38,40 @@ class _PromoSliderState extends State<PromoSlider> {
             itemBuilder: (context, index) {
               final banner = widget.banners[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  child: AppCachedImage(
-                    imageUrl: banner.imageUrl,
-                    width: double.infinity,
-                    height: 160,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    boxShadow: AppSpacing.shadowMd,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    child: AppCachedImage(
+                      imageUrl: banner.imageUrl,
+                      width: double.infinity,
+                      height: 180,
+                    ),
                   ),
                 ),
               );
             },
           ),
         ),
-        AppSpacing.verticalGapSm,
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             widget.banners.length,
             (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
               margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: _currentPage == index ? 24 : 8,
+              width: _currentPage == index ? 28 : 8,
               height: 8,
               decoration: BoxDecoration(
                 color: _currentPage == index
                     ? AppColors.primary
-                    : AppColors.divider,
+                    : AppColors.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
               ),
             ),
