@@ -14,10 +14,8 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
     const adapter = new PrismaPg({
         connectionString: env.DATABASE_URL,
-        pool: {
-            min: env.DATABASE_POOL_MIN,
-            max: env.DATABASE_POOL_MAX,
-        },
+        min: env.DATABASE_POOL_MIN,
+        max: env.DATABASE_POOL_MAX,
     });
     return new PrismaClient({ adapter });
 }
