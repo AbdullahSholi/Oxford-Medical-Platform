@@ -1,6 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
+
+// Conditional import for web platform view
+import 'cached_image_web.dart' if (dart.library.io) 'cached_image_native.dart'
+    as platform;
 
 class AppCachedImage extends StatelessWidget {
   final String imageUrl;
@@ -18,21 +24,51 @@ class AppCachedImage extends StatelessWidget {
     this.borderRadius,
   });
 
+  /// On web, rewrite R2 public URLs to go through the nginx media proxy
+  /// so that CORS headers are added. On mobile, use the original URL.
+  String get _resolvedUrl {
+    if (kIsWeb && imageUrl.startsWith(AppConstants.r2PublicUrl)) {
+      return imageUrl.replaceFirst(
+        AppConstants.r2PublicUrl,
+        AppConstants.mediaBaseUrl,
+      );
+    }
+    return imageUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (imageUrl.isEmpty) {
       return _buildPlaceholder();
     }
 
+    final url = _resolvedUrl;
+
+    // On web, use platform-specific HTML img element to avoid CanvasKit CORS
+    if (kIsWeb) {
+      final image = platform.buildWebImage(
+        url: url,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: _buildPlaceholder(),
+      );
+
+      if (borderRadius != null) {
+        return ClipRRect(borderRadius: borderRadius!, child: image);
+      }
+      return image;
+    }
+
     final image = CachedNetworkImage(
-      imageUrl: imageUrl,
+      imageUrl: url,
       width: width,
       height: height,
       fit: fit,
       maxWidthDiskCache: 800,
       maxHeightDiskCache: 800,
-      memCacheWidth: width?.toInt(),
-      memCacheHeight: height?.toInt(),
+      memCacheWidth: (width != null && width!.isFinite) ? width!.toInt() : null,
+      memCacheHeight: (height != null && height!.isFinite) ? height!.toInt() : null,
       placeholder: (_, __) => Container(
         width: width,
         height: height,

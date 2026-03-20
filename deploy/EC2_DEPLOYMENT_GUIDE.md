@@ -178,7 +178,7 @@ docker compose -f docker-compose.prod.yml exec postgres psql -U oxford oxford_me
 
 ### Manual backup
 ```bash
-docker compose -f docker-compose.prod.yml exec backup /bin/sh /backup.sh
+docker compose -f docker-compose.prod.yml exec backup /backup.sh
 ```
 
 ### Check backups
@@ -215,10 +215,6 @@ curl http://localhost/api/v1/products?limit=1    # correct
 
 ### BullMQ "noeviction" warnings
 Redis is configured with `allkeys-lru` for caching. BullMQ prefers `noeviction` but works fine with `allkeys-lru`. These warnings are safe to ignore.
-
-### Backup container keeps restarting
-Check logs: `docker compose -f docker-compose.prod.yml logs backup --tail 10`
-Common fix: pull latest code which fixes the read-only mount issue.
 
 ---
 

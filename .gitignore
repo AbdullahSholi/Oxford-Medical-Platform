@@ -41,3 +41,6 @@ coverage/
 
 # Misc
 -p/
+
+# Secrets
+*.pem

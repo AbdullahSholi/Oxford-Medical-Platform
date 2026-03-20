@@ -1,8 +1,15 @@
 abstract final class AppConstants {
   static const String appName = 'MedOrder';
   static const String appVersion = '1.0.0';
-  static const String baseUrl = 'http://localhost:3000/api/v1';
-  static const String devBaseUrl = 'http://localhost:3000/api/v1';
+  static const String baseUrl = 'http://52.1.133.146/api/v1';
+  static const String devBaseUrl = 'http://52.1.133.146/api/v1';
+  static const String prodBaseUrl = 'http://52.1.133.146/api/v1';
+
+  // Media proxy base URL — nginx proxies R2 images with CORS headers
+  static const String mediaBaseUrl = 'http://52.1.133.146/media';
+
+  // R2 public bucket URL (original, has CORS issues on web)
+  static const String r2PublicUrl = 'https://pub-e9f05437b08e4c4997ad96709a761250.r2.dev';
 
   // Pagination
   static const int defaultPageSize = 20;

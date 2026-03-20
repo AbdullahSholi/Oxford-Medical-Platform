@@ -95,52 +95,54 @@ class ProductCard extends StatelessWidget {
               ],
             ),
             // Details
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      height: 1.3,
-                    ),
-                  ),
-                  AppSpacing.verticalGapXs,
-                  if (product.originalPrice != null &&
-                      product.originalPrice != product.price) ...[
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      Formatters.price(product.originalPrice!),
+                      product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textHint,
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                  ],
-                  Text(
-                    Formatters.price(product.price),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  AppSpacing.verticalGapSm,
-                  if (!product.inStock)
-                    const Text(
-                      'Out of Stock',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.error,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
+                        height: 1.3,
                       ),
                     ),
-                ],
+                    AppSpacing.verticalGapXs,
+                    if (product.originalPrice != null &&
+                        product.originalPrice != product.price) ...[
+                      Text(
+                        Formatters.price(product.originalPrice!),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textHint,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                    Text(
+                      Formatters.price(product.price),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    if (!product.inStock)
+                      const Text(
+                        'Out of Stock',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ],
