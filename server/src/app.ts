@@ -56,7 +56,7 @@ app.use(helmet({
 app.use(
     cors({
         origin: (origin, callback) => {
-            if (env.NODE_ENV === 'development') {
+            if (env.NODE_ENV === 'development' || env.CORS_ORIGINS === '*') {
                 callback(null, true);
             } else {
                 const origins = env.CORS_ORIGINS.split(',').map((o) => o.trim());
