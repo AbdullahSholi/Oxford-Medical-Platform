@@ -4,7 +4,7 @@
 # ═══════════════════════════════════════════════════════════
 
 services:
-  # ── API Server ─────────────────────────────────────────
+  # ── API Server ───────────────────────────────────────
   server:
     build:
       context: ./server
@@ -25,7 +25,7 @@ services:
     expose:
       - "3000"
 
-  # ── PostgreSQL ─────────────────────────────────────────
+  # ── PostgreSQL ───────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: medorder-postgres
@@ -44,7 +44,7 @@ services:
     networks:
       - medorder-net
 
-  # ── Redis ──────────────────────────────────────────────
+  # ── Redis ────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: medorder-redis
@@ -78,7 +78,7 @@ services:
     networks:
       - medorder-net
 
-  # ── Certbot (SSL) ─────────────────────────────────────
+  # ── Certbot (SSL) ───────────────────────────────────
   certbot:
     image: certbot/certbot
     container_name: medorder-certbot
@@ -104,7 +104,7 @@ services:
       - backups:/backups
       - ./deploy/scripts/backup.sh:/backup.sh:ro
       - ./deploy/scripts/crontab:/etc/crontabs/root:ro
-    entrypoint: ["/bin/sh", "-c", "chmod +x /backup.sh && crond -f -l 2"]
+    entrypoint: ["/bin/sh", "-c", "crond -f -l 2"]
     networks:
       - medorder-net
 
