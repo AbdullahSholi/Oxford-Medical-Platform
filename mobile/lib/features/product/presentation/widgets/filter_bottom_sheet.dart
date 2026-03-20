@@ -48,32 +48,59 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       padding: EdgeInsets.only(
         left: AppSpacing.xl,
         right: AppSpacing.xl,
-        top: AppSpacing.xl,
+        top: AppSpacing.md,
         bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Filters',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-              TextButton(
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySurface,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    ),
+                    child: const Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Filters',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              TextButton.icon(
                 onPressed: _reset,
-                child: const Text('Reset'),
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Reset'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
           AppSpacing.verticalGapLg,
           // Category filter
           if (widget.categories.isNotEmpty) ...[
-            Text('Category',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+            _SectionLabel(icon: Icons.category_outlined, label: 'Category'),
             AppSpacing.verticalGapSm,
             Wrap(
               spacing: AppSpacing.sm,
@@ -88,8 +115,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ],
           // Brand filter
           if (widget.brands.isNotEmpty) ...[
-            Text('Brand',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+            _SectionLabel(icon: Icons.branding_watermark_outlined, label: 'Brand'),
             AppSpacing.verticalGapSm,
             Wrap(
               spacing: AppSpacing.sm,
@@ -103,16 +129,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             AppSpacing.verticalGapLg,
           ],
           // Price range
-          Text('Price Range',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          _SectionLabel(icon: Icons.payments_outlined, label: 'Price Range'),
           AppSpacing.verticalGapXs,
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('EGP ${_priceRange.start.round()}',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              Text('EGP ${_priceRange.end.round()}',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Text(
+                  'EGP ${_priceRange.start.round()}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Text(
+                  'EGP ${_priceRange.end.round()}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                ),
+              ),
             ],
           ),
           RangeSlider(
@@ -126,17 +169,36 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ),
             onChanged: (values) => setState(() => _priceRange = values),
           ),
-          AppSpacing.verticalGapMd,
+          AppSpacing.verticalGapSm,
           // In stock toggle
-          SwitchListTile(
-            title: const Text('In Stock Only'),
-            value: _inStockOnly,
-            onChanged: (value) => setState(() => _inStockOnly = value),
-            contentPadding: EdgeInsets.zero,
+          GestureDetector(
+            onTap: () => setState(() => _inStockOnly = !_inStockOnly),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _inStockOnly ? AppColors.primarySurface : AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(
+                  color: _inStockOnly ? AppColors.primary.withOpacity(0.3) : Colors.transparent,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _inStockOnly ? Icons.check_circle_rounded : Icons.circle_outlined,
+                    color: _inStockOnly ? AppColors.primary : AppColors.textHint,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  const Text('In Stock Only', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
           ),
           AppSpacing.verticalGapXl,
           AppButton(
             label: 'Apply Filters',
+            variant: AppButtonVariant.gradient,
             onPressed: () {
               widget.onApply(ProductFilter(
                 categoryId: _selectedCategoryId,
@@ -156,30 +218,50 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _buildChip({required String label, required String? value}) {
     final isSelected = _selectedCategoryId == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _selectedCategoryId = value),
-      selectedColor: AppColors.primaryLight.withOpacity(0.2),
-      labelStyle: TextStyle(
-        color: isSelected ? AppColors.primary : AppColors.textPrimary,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-        fontSize: 13,
+    return GestureDetector(
+      onTap: () => setState(() => _selectedCategoryId = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primarySurface : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          border: Border.all(
+            color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildBrandChip({required String label, required String? value}) {
     final isSelected = _selectedBrandId == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _selectedBrandId = value),
-      selectedColor: AppColors.primaryLight.withOpacity(0.2),
-      labelStyle: TextStyle(
-        color: isSelected ? AppColors.primary : AppColors.textPrimary,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-        fontSize: 13,
+    return GestureDetector(
+      onTap: () => setState(() => _selectedBrandId = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primarySurface : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          border: Border.all(
+            color: isSelected ? AppColors.primary.withOpacity(0.3) : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }
@@ -191,5 +273,29 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _selectedCategoryId = null;
       _selectedBrandId = null;
     });
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _SectionLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
   }
 }

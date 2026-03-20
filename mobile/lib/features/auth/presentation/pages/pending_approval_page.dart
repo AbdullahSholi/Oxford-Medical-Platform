@@ -19,35 +19,90 @@ class PendingApprovalPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.hourglass_top_rounded,
-                size: 80,
-                color: AppColors.statusPending,
+              const Spacer(),
+              // Illustration-style icon container
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.warningLight,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.warning.withOpacity(0.2),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.hourglass_top_rounded,
+                      size: 40,
+                      color: AppColors.statusPending,
+                    ),
+                  ),
+                ),
               ),
               AppSpacing.verticalGapXl,
               Text(
                 context.l10n.pendingApprovalTitle,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
                 textAlign: TextAlign.center,
               ),
               AppSpacing.verticalGapMd,
-              Text(
-                context.l10n.pendingApprovalSubtitle,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.warningLight,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: const Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 20),
                     ),
-                textAlign: TextAlign.center,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        context.l10n.pendingApprovalSubtitle,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 48),
+              const Spacer(),
               AppButton(
                 label: context.l10n.profileLogout,
                 variant: AppButtonVariant.secondary,
+                icon: Icons.logout_rounded,
                 onPressed: () {
                   context.read<AuthBloc>().add(const AuthLogoutRequested());
                 },
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),

@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../review/domain/entities/review.dart';
 import '../bloc/product_detail_bloc.dart';
@@ -27,14 +30,13 @@ class ReviewsTab extends StatelessWidget {
         if (state is! ProductDetailLoaded) return const SizedBox.shrink();
 
         if (!state.reviewsFetched && !state.reviewsLoading) {
-          // Auto-fetch reviews on first display
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<ProductDetailBloc>().add(ProductReviewsFetched(productId));
           });
         }
 
         if (state.reviewsLoading && state.reviews.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoading();
         }
 
         return SingleChildScrollView(
@@ -43,19 +45,62 @@ class ReviewsTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Write review button
-              OutlinedButton.icon(
-                onPressed: () => _showWriteReviewDialog(context, productId),
-                icon: const Icon(Icons.rate_review_outlined),
-                label: const Text('Write a Review'),
+              GestureDetector(
+                onTap: () => _showWriteReviewDialog(context, productId),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySurface,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.rate_review_outlined, size: 18, color: AppColors.primary),
+                      SizedBox(width: 8),
+                      Text(
+                        'Write a Review',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               AppSpacing.verticalGapMd,
               if (state.reviews.isEmpty)
-                const Center(
+                Center(
                   child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.xl),
-                    child: Text(
-                      'No reviews yet. Be the first to review!',
-                      style: TextStyle(color: AppColors.textSecondary),
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.rate_review_outlined, size: 32, color: AppColors.textHint),
+                        ),
+                        AppSpacing.verticalGapMd,
+                        const Text(
+                          'No reviews yet',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Be the first to review!',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -82,56 +127,72 @@ class ReviewsTab extends StatelessWidget {
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(dialogContext).viewInsets.bottom,
-                left: AppSpacing.lg,
-                right: AppSpacing.lg,
-                top: AppSpacing.lg,
+                left: 20,
+                right: 20,
+                top: 12,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.divider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const Text(
                     'Write a Review',
-                    style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                   AppSpacing.verticalGapLg,
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          index < selectedRating
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: AppColors.warning,
-                          size: 36,
-                        ),
-                        onPressed: () =>
-                            setState(() => selectedRating = index + 1),
-                      );
-                    }),
+                  // Star rating
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          icon: Icon(
+                            index < selectedRating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: AppColors.warning,
+                            size: 36,
+                          ),
+                          onPressed: () =>
+                              setState(() => selectedRating = index + 1),
+                        );
+                      }),
+                    ),
                   ),
-                  AppSpacing.verticalGapMd,
-                  TextField(
+                  AppSpacing.verticalGapLg,
+                  AppTextField(
                     controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Title (optional)',
-                      border: OutlineInputBorder(),
-                    ),
+                    label: 'Title (optional)',
+                    prefixIcon: const Icon(Icons.title_rounded),
                   ),
-                  AppSpacing.verticalGapMd,
-                  TextField(
+                  AppSpacing.verticalGapLg,
+                  AppTextField(
                     controller: bodyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Your review (optional)',
-                      border: OutlineInputBorder(),
-                    ),
+                    label: 'Your review (optional)',
+                    prefixIcon: const Icon(Icons.edit_note_rounded),
                     maxLines: 3,
                   ),
-                  AppSpacing.verticalGapLg,
-                  ElevatedButton(
+                  AppSpacing.verticalGapXl,
+                  AppButton(
+                    label: 'Submit Review',
+                    variant: AppButtonVariant.gradient,
                     onPressed: () {
                       context.read<ProductDetailBloc>().add(
                             ProductReviewSubmitted(
@@ -147,9 +208,8 @@ class ReviewsTab extends StatelessWidget {
                           );
                       Navigator.pop(dialogContext);
                     },
-                    child: const Text('Submit Review'),
                   ),
-                  AppSpacing.verticalGapLg,
+                  const SizedBox(height: 16),
                 ],
               ),
             );
@@ -167,63 +227,85 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        boxShadow: AppSpacing.shadowSm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: Center(
                   child: Text(
                     review.doctorName.isNotEmpty
                         ? review.doctorName[0].toUpperCase()
                         : '?',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
-                AppSpacing.horizontalGapSm,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              AppSpacing.horizontalGapSm,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review.doctorName,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    RatingStars(rating: review.rating, size: 14),
+                  ],
+                ),
+              ),
+              if (review.isVerifiedPurchase)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.successLight,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(Icons.verified_rounded, size: 12, color: AppColors.success),
+                      SizedBox(width: 3),
                       Text(
-                        review.doctorName,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        'Verified',
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      RatingStars(rating: review.rating, size: 14),
                     ],
                   ),
                 ),
-                if (review.isVerifiedPurchase)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                    ),
-                    child: const Text(
-                      'Verified',
-                      style: TextStyle(
-                        color: AppColors.success,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            if (review.comment != null && review.comment!.isNotEmpty) ...[
-              AppSpacing.verticalGapSm,
-              Text(review.comment!),
             ],
+          ),
+          if (review.comment != null && review.comment!.isNotEmpty) ...[
+            AppSpacing.verticalGapSm,
+            Text(
+              review.comment!,
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

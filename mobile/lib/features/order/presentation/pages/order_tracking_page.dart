@@ -6,6 +6,8 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/services/socket_service.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_error_widget.dart';
 import '../../domain/entities/order.dart';
 import '../bloc/order_detail_bloc.dart';
 
@@ -50,14 +52,21 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.orderTracking)),
+      appBar: AppBar(
+        title: Text(
+          context.l10n.orderTracking,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: false,
+      ),
       body: BlocBuilder<OrderDetailBloc, OrderDetailState>(
         builder: (context, state) {
-          if (state is OrderDetailLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          if (state is OrderDetailLoading) return const AppLoading();
           if (state is OrderDetailError) {
-            return Center(child: Text(state.message));
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => context.read<OrderDetailBloc>().add(OrderDetailFetched(widget.id)),
+            );
           }
           if (state is OrderDetailLoaded) {
             return _TrackingContent(order: state.order);
@@ -79,136 +88,234 @@ class _TrackingContent extends StatelessWidget {
     final currentIndex = _currentStepIndex;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Order header
+          // Status header card
           Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              boxShadow: AppSpacing.shadowSm,
             ),
             child: Row(
               children: [
-                Icon(_statusIcon, size: 40, color: _statusColor),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: _statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Icon(_statusIcon, size: 28, color: _statusColor),
+                ),
                 AppSpacing.horizontalGapMd,
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_statusTitle, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        _statusTitle,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(_statusSubtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      Text(
+                        _statusSubtitle,
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          AppSpacing.verticalGapXl,
+          AppSpacing.verticalGapLg,
 
           // Live indicator
-          Row(
-            children: [
-              Container(
-                width: 8, height: 8,
-                decoration: BoxDecoration(
-                  color: order.status == OrderStatus.cancelled ? AppColors.error : AppColors.success,
-                  shape: BoxShape.circle,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: order.status == OrderStatus.cancelled
+                  ? AppColors.errorLight
+                  : AppColors.successLight,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: order.status == OrderStatus.cancelled ? AppColors.error : AppColors.success,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              AppSpacing.horizontalGapSm,
-              Text(
-                order.status == OrderStatus.cancelled ? 'Cancelled' : 'Live Tracking',
-                style: TextStyle(
-                  color: order.status == OrderStatus.cancelled ? AppColors.error : AppColors.success,
-                  fontSize: 12, fontWeight: FontWeight.w600,
+                const SizedBox(width: 6),
+                Text(
+                  order.status == OrderStatus.cancelled ? 'Cancelled' : 'Live Tracking',
+                  style: TextStyle(
+                    color: order.status == OrderStatus.cancelled ? AppColors.error : AppColors.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           AppSpacing.verticalGapLg,
 
-          // Timeline
-          ...List.generate(steps.length, (index) {
-            final isCompleted = index <= currentIndex;
-            final isCurrent = index == currentIndex;
-            final isLast = index == steps.length - 1;
+          // Timeline card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              boxShadow: AppSpacing.shadowSm,
+            ),
+            child: Column(
+              children: List.generate(steps.length, (index) {
+                final isCompleted = index <= currentIndex;
+                final isCurrent = index == currentIndex;
+                final isLast = index == steps.length - 1;
 
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Timeline dot + line
-                  SizedBox(
-                    width: 32,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: isCurrent ? 20 : 14,
-                          height: isCurrent ? 20 : 14,
-                          decoration: BoxDecoration(
-                            color: isCompleted ? AppColors.primary : AppColors.divider,
-                            shape: BoxShape.circle,
-                            border: isCurrent ? Border.all(color: AppColors.primary, width: 3) : null,
-                          ),
-                          child: isCompleted && !isCurrent
-                              ? const Icon(Icons.check, size: 10, color: Colors.white)
-                              : null,
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 36,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isCompleted ? AppColors.primary : AppColors.surfaceVariant,
+                                border: isCurrent
+                                    ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 3)
+                                    : null,
+                                boxShadow: isCurrent
+                                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 8)]
+                                    : null,
+                              ),
+                              child: Icon(
+                                isCompleted && !isCurrent ? Icons.check_rounded : _stepIcon(index),
+                                size: 16,
+                                color: isCompleted ? Colors.white : AppColors.textHint,
+                              ),
+                            ),
+                            if (!isLast)
+                              Expanded(
+                                child: Container(
+                                  width: 2,
+                                  margin: const EdgeInsets.symmetric(vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isCompleted && index < currentIndex
+                                        ? AppColors.primary
+                                        : AppColors.divider,
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        if (!isLast)
-                          Expanded(
-                            child: Container(
-                              width: 2,
-                              color: isCompleted && index < currentIndex ? AppColors.primary : AppColors.divider,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  AppSpacing.horizontalGapMd,
-                  // Step content
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            steps[index]['title']!,
-                            style: TextStyle(
-                              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                              color: isCompleted ? AppColors.textPrimary : AppColors.textHint,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            steps[index]['description']!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isCompleted ? AppColors.textSecondary : AppColors.textHint,
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  steps[index]['title']!,
+                                  style: TextStyle(
+                                    fontWeight: isCompleted ? FontWeight.w600 : FontWeight.w400,
+                                    fontSize: 14,
+                                    color: isCompleted ? AppColors.textPrimary : AppColors.textHint,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                steps[index]['description']!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isCompleted ? AppColors.textSecondary : AppColors.textHint,
+                                ),
+                              ),
+                              if (isCurrent)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primarySurface,
+                                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                                    ),
+                                    child: const Text(
+                                      'Current',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }),
+                );
+              }),
+            ),
+          ),
+          AppSpacing.verticalGapLg,
 
-          AppSpacing.verticalGapXl,
-
-          // Order info
-          Text('Order #${order.orderNumber.length > 8 ? order.orderNumber.substring(0, 8).toUpperCase() : order.orderNumber}',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          // Order number
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.receipt_long_rounded, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Order #${order.orderNumber.length > 8 ? order.orderNumber.substring(0, 8).toUpperCase() : order.orderNumber}',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+
+  IconData _stepIcon(int index) => switch (index) {
+    0 => Icons.receipt_long_rounded,
+    1 => Icons.check_circle_rounded,
+    2 => Icons.settings_rounded,
+    3 => Icons.local_shipping_rounded,
+    4 => Icons.done_all_rounded,
+    _ => Icons.circle,
+  };
 
   List<Map<String, String>> get _trackingSteps => [
     {'title': 'Order Placed', 'description': 'Your order has been received'},

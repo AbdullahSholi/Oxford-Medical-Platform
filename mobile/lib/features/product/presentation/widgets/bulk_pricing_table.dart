@@ -11,47 +11,108 @@ class BulkPricingTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Table(
-      border: TableBorder.all(
-        color: AppColors.divider,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        boxShadow: AppSpacing.shadowSm,
       ),
-      children: [
-        const TableRow(
-          decoration: BoxDecoration(color: AppColors.surfaceVariant),
-          children: [
-            _Cell(text: 'Quantity', isHeader: true),
-            _Cell(text: 'Price per Unit', isHeader: true),
-          ],
-        ),
-        ...pricing.map((tier) => TableRow(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Header row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: AppColors.primarySurface,
+            ),
+            child: const Row(
               children: [
-                _Cell(text: '${tier.minQuantity} - ${tier.maxQuantity}'),
-                _Cell(text: Formatters.price(tier.pricePerUnit)),
+                Expanded(
+                  child: Text(
+                    'Quantity',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Price per Unit',
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
               ],
-            )),
-      ],
-    );
-  }
-}
+            ),
+          ),
+          // Data rows
+          ...List.generate(pricing.length, (index) {
+            final tier = pricing[index];
+            final isLast = index == pricing.length - 1;
+            final isBest = index == pricing.length - 1 && pricing.length > 1;
 
-class _Cell extends StatelessWidget {
-  final String text;
-  final bool isHeader;
-
-  const _Cell({required this.text, this.isHeader = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontWeight: isHeader ? FontWeight.w600 : FontWeight.w400,
-          fontSize: 13,
-        ),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Text(
+                              '${tier.minQuantity} - ${tier.maxQuantity}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (isBest) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: AppColors.successLight,
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                                ),
+                                child: const Text(
+                                  'Best',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Text(
+                        Formatters.price(tier.pricePerUnit),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isBest ? FontWeight.w700 : FontWeight.w500,
+                          color: isBest ? AppColors.success : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isLast)
+                  const Divider(height: 1, color: AppColors.divider),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
