@@ -19,11 +19,19 @@ class LoginPage extends StatelessWidget {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
+            context.showErrorDialog(
+              title: 'Login Failed',
+              message: state.message,
+            );
           } else if (state is AuthAuthenticated) {
             context.go(RouteNames.home);
           } else if (state is AuthPendingApproval) {
-            context.go(RouteNames.pendingApproval);
+            context.showInfoDialog(
+              title: 'Account Pending',
+              message: 'Your account is awaiting admin approval. You will be notified once approved.',
+            ).then((_) {
+              if (context.mounted) context.go(RouteNames.pendingApproval);
+            });
           }
         },
         child: SingleChildScrollView(

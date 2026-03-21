@@ -12,6 +12,10 @@ import '../../features/doctors/pages/doctors_page.dart';
 import '../../features/discounts/pages/discounts_page.dart';
 import '../../features/discounts/pages/discount_form_page.dart';
 import '../../features/banners/pages/banners_page.dart';
+import '../../features/banners/pages/banner_form_page.dart';
+import '../../features/categories/pages/categories_page.dart';
+import '../../features/categories/pages/category_form_page.dart';
+import '../../features/settings/pages/settings_page.dart';
 import '../layout/admin_shell.dart';
 
 /// Bridges Bloc stream → ChangeNotifier so GoRouter re-evaluates redirects.
@@ -61,6 +65,12 @@ abstract class AppRouter {
             GoRoute(path: '/discounts/new', builder: (_, __) => const DiscountFormPage()),
             GoRoute(path: '/discounts/:id/edit', builder: (_, state) => DiscountFormPage(id: state.pathParameters['id'])),
             GoRoute(path: '/banners', builder: (_, __) => const BannersPage()),
+            GoRoute(path: '/banners/new', builder: (_, __) => const BannerFormPage()),
+            GoRoute(path: '/banners/:id/edit', builder: (_, state) => BannerFormPage(id: state.pathParameters['id'])),
+            GoRoute(path: '/categories', builder: (_, __) => const CategoriesPage()),
+            GoRoute(path: '/categories/new', builder: (_, __) => const CategoryFormPage()),
+            GoRoute(path: '/categories/:id/edit', builder: (_, state) => CategoryFormPage(id: state.pathParameters['id'])),
+            GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
           ],
         ),
       ],

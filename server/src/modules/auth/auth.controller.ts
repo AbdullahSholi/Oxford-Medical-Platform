@@ -65,6 +65,11 @@ export class AuthController {
         });
     };
 
+    changePassword = async (req: Request, res: Response): Promise<void> => {
+        await this.service.changePassword(req.user!.id, req.user!.role, req.body.currentPassword, req.body.newPassword);
+        ApiResponse.success(res, { message: 'Password changed successfully' });
+    };
+
     logout = async (req: Request, res: Response): Promise<void> => {
         if (req.user) {
             await this.service.logout(req.user.tokenJti, req.user.id);

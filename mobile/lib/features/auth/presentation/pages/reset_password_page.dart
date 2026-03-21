@@ -55,10 +55,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
+            context.showErrorDialog(
+              title: 'Reset Failed',
+              message: state.message,
+            );
           } else if (state is AuthPasswordResetSuccess) {
-            context.showSnackBar('Password reset successful. Please login.');
-            context.go('/auth/login');
+            context.showSuccessDialog(
+              title: 'Password Reset',
+              message: 'Your password has been reset successfully. Please login with your new password.',
+              confirmLabel: 'Go to Login',
+            ).then((_) {
+              if (context.mounted) context.go('/auth/login');
+            });
           }
         },
         child: SingleChildScrollView(

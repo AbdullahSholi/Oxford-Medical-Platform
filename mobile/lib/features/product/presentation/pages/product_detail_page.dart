@@ -79,7 +79,11 @@ class ProductDetailPage extends StatelessWidget {
                             ),
                             onPressed: () {
                               context.read<WishlistBloc>().add(WishlistItemToggled(product.id));
-                              context.showSnackBar('Wishlist updated');
+                              if (inWishlist) {
+                                context.showInfoSnackBar('Removed from wishlist');
+                              } else {
+                                context.showSuccessSnackBar('Added to wishlist');
+                              }
                             },
                           ),
                         );
@@ -402,7 +406,7 @@ class ProductDetailPage extends StatelessWidget {
                               context.read<CartBloc>().add(
                                     CartItemAdded(productId: state.product.id),
                                   );
-                              context.showSnackBar('Added to cart');
+                              context.showSuccessSnackBar('Added to cart successfully');
                             }
                           : null,
                     ),

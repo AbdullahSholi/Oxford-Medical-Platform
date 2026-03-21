@@ -26,7 +26,20 @@ class CartPage extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      body: BlocBuilder<CartBloc, CartState>(
+      body: BlocConsumer<CartBloc, CartState>(
+        listener: (context, state) {
+          if (state is CartErrorState) {
+            context.showErrorDialog(
+              title: 'Cart Error',
+              message: state.message,
+            );
+          }
+          if (state is CartLoadedState) {
+            if (state.cart.couponCode != null) {
+              context.showSuccessSnackBar('Coupon "${state.cart.couponCode}" applied successfully!');
+            }
+          }
+        },
         builder: (context, state) {
           if (state is CartInitial) {
             context.read<CartBloc>().add(const CartLoaded());
@@ -66,10 +79,18 @@ class CartPage extends StatelessWidget {
                                 quantity: qty,
                               ));
                         },
-                        onRemove: () {
-                          context.read<CartBloc>().add(
-                                CartItemRemoved(cart.items[index].productId),
-                              );
+                        onRemove: () async {
+                          final confirmed = await context.showConfirmDialog(
+                            title: 'Remove Item',
+                            message: 'Are you sure you want to remove "${cart.items[index].productName}" from your cart?',
+                            confirmLabel: 'Remove',
+                            cancelLabel: 'Keep',
+                          );
+                          if (confirmed == true && context.mounted) {
+                            context.read<CartBloc>().add(
+                                  CartItemRemoved(cart.items[index].productId),
+                                );
+                          }
                         },
                       );
                     },

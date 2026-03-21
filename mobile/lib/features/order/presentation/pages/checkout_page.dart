@@ -72,12 +72,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
       }
     } catch (e) {
       setState(() => _loadingAddresses = false);
+      if (mounted) {
+        context.showErrorSnackBar('Failed to load addresses. Pull down to retry.');
+      }
     }
   }
 
   Future<void> _placeOrder() async {
     if (_selectedAddressId == null) {
-      context.showSnackBar('Please select a delivery address');
+      context.showWarningDialog(
+        title: 'Address Required',
+        message: 'Please select a delivery address before placing your order.',
+        confirmLabel: 'OK',
+      );
       return;
     }
     setState(() => _placingOrder = true);
@@ -91,7 +98,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
       result.fold(
         (failure) {
           setState(() => _placingOrder = false);
-          context.showSnackBar(failure.message);
+          context.showErrorDialog(
+            title: 'Order Failed',
+            message: failure.message,
+          );
         },
         (order) {
           context.read<CartBloc>().add(const CartLoaded());
@@ -100,18 +110,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
     } catch (e) {
       setState(() => _placingOrder = false);
-      context.showSnackBar('Failed to place order: $e');
+      context.showErrorDialog(
+        title: 'Order Failed',
+        message: 'Something went wrong while placing your order. Please try again.',
+      );
     }
   }
 
   void _applyCoupon() {
     final code = _couponController.text.trim();
-    if (code.isEmpty) return;
+    if (code.isEmpty) {
+      context.showWarningSnackBar('Please enter a coupon code');
+      return;
+    }
     setState(() {
       _discountCode = code;
       _couponApplied = true;
     });
-    context.showSnackBar('Coupon "$code" will be applied at checkout');
+    context.showSuccessSnackBar('Coupon "$code" will be applied to your order');
   }
 
   void _removeCoupon() {

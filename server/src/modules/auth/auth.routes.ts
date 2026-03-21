@@ -13,6 +13,7 @@ import {
     verifyOtpSchema,
     resetPasswordSchema,
     refreshTokenSchema,
+    changePasswordSchema,
 } from './auth.schema';
 import prisma from '../../config/database';
 
@@ -29,4 +30,5 @@ authRoutes.post('/otp/send', authLimiter, validate(sendOtpSchema), asyncHandler(
 authRoutes.post('/otp/verify', authLimiter, validate(verifyOtpSchema), asyncHandler(controller.verifyOtp));
 authRoutes.post('/password/reset', authLimiter, validate(resetPasswordSchema), asyncHandler(controller.resetPassword));
 authRoutes.post('/refresh-token', validate(refreshTokenSchema), asyncHandler(controller.refreshToken));
+authRoutes.patch('/change-password', authenticate, validate(changePasswordSchema), asyncHandler(controller.changePassword));
 authRoutes.post('/logout', authenticate, asyncHandler(controller.logout));

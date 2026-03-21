@@ -64,6 +64,7 @@ class _OtpPageState extends State<OtpPage> {
   void _onResend() {
     context.read<AuthBloc>().add(AuthOtpResendRequested(email: widget.email));
     _startCooldown();
+    context.showSuccessSnackBar('OTP code has been resent to ${widget.email}');
   }
 
   @override
@@ -72,7 +73,10 @@ class _OtpPageState extends State<OtpPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
+            context.showErrorDialog(
+              title: 'Verification Failed',
+              message: state.message,
+            );
           }
         },
         child: SingleChildScrollView(

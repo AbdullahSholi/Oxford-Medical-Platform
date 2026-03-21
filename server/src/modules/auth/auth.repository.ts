@@ -104,6 +104,17 @@ export class AuthRepository {
         });
     }
 
+    async findAdminById(id: string) {
+        return this.prisma.admin.findUnique({ where: { id } });
+    }
+
+    async updateAdminPassword(id: string, passwordHash: string) {
+        return this.prisma.admin.update({
+            where: { id },
+            data: { passwordHash },
+        });
+    }
+
     async ensureCart(doctorId: string) {
         return this.prisma.cart.upsert({
             where: { doctorId },

@@ -42,9 +42,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
+            context.showErrorDialog(
+              title: 'Request Failed',
+              message: state.message,
+            );
           } else if (state is AuthOtpSent) {
-            context.push('/auth/otp', extra: state.email);
+            context.showSuccessDialog(
+              title: 'OTP Sent',
+              message: 'A verification code has been sent to your email address.',
+              confirmLabel: 'Continue',
+            ).then((_) {
+              if (context.mounted) context.push('/auth/otp', extra: state.email);
+            });
           }
         },
         child: SingleChildScrollView(

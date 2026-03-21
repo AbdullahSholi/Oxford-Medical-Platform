@@ -133,6 +133,24 @@ export class AuthService {
         await this.repo.updateDoctorPassword(doctor.id, passwordHash);
     }
 
+    async changePassword(userId: string, role: string, currentPassword: string, newPassword: string): Promise<void> {
+        if (role === 'admin') {
+            const admin = await this.repo.findAdminById(userId);
+            if (!admin) throw AppError.notFound('Admin');
+            const valid = await bcrypt.compare(currentPassword, admin.passwordHash);
+            if (!valid) throw AppError.unauthorized('Current password is incorrect', 'INVALID_PASSWORD');
+            const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
+            await this.repo.updateAdminPassword(userId, passwordHash);
+        } else {
+            const doctor = await this.repo.findDoctorById(userId);
+            if (!doctor) throw AppError.notFound('Doctor');
+            const valid = await bcrypt.compare(currentPassword, doctor.passwordHash);
+            if (!valid) throw AppError.unauthorized('Current password is incorrect', 'INVALID_PASSWORD');
+            const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
+            await this.repo.updateDoctorPassword(userId, passwordHash);
+        }
+    }
+
     async logout(tokenJti: string, userId: string): Promise<void> {
         // Blacklist current access token
         await redis.setex(`blacklist:${tokenJti}`, 900, '1'); // 15min TTL

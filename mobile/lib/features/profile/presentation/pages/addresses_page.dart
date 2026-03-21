@@ -57,9 +57,9 @@ class _AddressesPageState extends State<AddressesPage> {
       final apiClient = di.sl<ApiClient>();
       await apiClient.delete<void>('${ApiEndpoints.doctorAddresses}/$id', parser: (_) {});
       _loadAddresses();
-      if (mounted) context.showSnackBar('Address deleted');
+      if (mounted) context.showSuccessSnackBar('Address deleted successfully');
     } catch (e) {
-      if (mounted) context.showSnackBar('Failed to delete address');
+      if (mounted) context.showErrorSnackBar('Failed to delete address');
     }
   }
 
@@ -192,9 +192,9 @@ class _AddressesPageState extends State<AddressesPage> {
                                 );
                               }
                               _loadAddresses();
-                              if (mounted) context.showSnackBar(isEdit ? 'Address updated' : 'Address added');
+                              if (mounted) context.showSuccessSnackBar(isEdit ? 'Address updated successfully' : 'Address added successfully');
                             } catch (e) {
-                              if (mounted) context.showSnackBar('Failed to save address');
+                              if (mounted) context.showErrorSnackBar('Failed to save address');
                             }
                           },
                         ),

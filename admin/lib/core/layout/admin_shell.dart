@@ -11,9 +11,11 @@ class AdminShell extends StatelessWidget {
     _NavItem(icon: Icons.dashboard_rounded, label: 'Dashboard', path: '/'),
     _NavItem(icon: Icons.shopping_bag_rounded, label: 'Orders', path: '/orders'),
     _NavItem(icon: Icons.inventory_2_rounded, label: 'Products', path: '/products'),
+    _NavItem(icon: Icons.category_rounded, label: 'Categories', path: '/categories'),
     _NavItem(icon: Icons.people_rounded, label: 'Doctors', path: '/doctors'),
     _NavItem(icon: Icons.discount_rounded, label: 'Discounts', path: '/discounts'),
     _NavItem(icon: Icons.campaign_rounded, label: 'Banners', path: '/banners'),
+    _NavItem(icon: Icons.settings_rounded, label: 'Settings', path: '/settings'),
   ];
 
   @override

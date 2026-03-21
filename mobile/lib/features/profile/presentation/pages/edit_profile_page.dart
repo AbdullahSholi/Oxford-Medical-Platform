@@ -83,14 +83,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (mounted) {
         if (response.success) {
           context.read<AuthBloc>().add(const AuthCheckRequested());
-          context.showSnackBar('Profile updated successfully');
+          context.showSuccessSnackBar('Profile updated successfully');
           Navigator.of(context).pop();
         } else {
-          context.showSnackBar(response.error?.message ?? 'Failed to update profile');
+          context.showErrorDialog(
+            title: 'Update Failed',
+            message: response.error?.message ?? 'Failed to update profile',
+          );
         }
       }
     } catch (e) {
-      if (mounted) context.showSnackBar('Failed to update profile');
+      if (mounted) {
+        context.showErrorDialog(
+          title: 'Update Failed',
+          message: 'Something went wrong while updating your profile.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

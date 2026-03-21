@@ -20,10 +20,10 @@ class ReviewsTab extends StatelessWidget {
     return BlocConsumer<ProductDetailBloc, ProductDetailState>(
       listener: (context, state) {
         if (state is ProductDetailLoaded && state.reviewSubmitted) {
-          context.showSnackBar('Review submitted successfully!');
+          context.showSuccessSnackBar('Review submitted successfully!');
         }
         if (state is ProductDetailLoaded && state.reviewError != null) {
-          context.showSnackBar(state.reviewError!, isError: true);
+          context.showErrorSnackBar(state.reviewError!);
         }
       },
       builder: (context, state) {

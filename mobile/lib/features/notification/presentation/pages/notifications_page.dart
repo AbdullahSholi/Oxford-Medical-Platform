@@ -35,7 +35,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         centerTitle: false,
         actions: [
           TextButton.icon(
-            onPressed: () => context.read<NotificationBloc>().add(const NotificationsAllMarkedRead()),
+            onPressed: () {
+              context.read<NotificationBloc>().add(const NotificationsAllMarkedRead());
+              context.showSuccessSnackBar('All notifications marked as read');
+            },
             icon: const Icon(Icons.done_all_rounded, size: 18),
             label: const Text('Mark all read', style: TextStyle(fontSize: 13)),
             style: TextButton.styleFrom(
@@ -45,7 +48,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: BlocBuilder<NotificationBloc, NotificationState>(
+      body: BlocConsumer<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationError) {
+            context.showErrorSnackBar(state.message);
+          }
+        },
         builder: (context, state) {
           if (state is NotificationLoading) return const AppLoading();
           if (state is NotificationError) {

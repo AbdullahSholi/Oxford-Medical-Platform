@@ -29,7 +29,21 @@ class OrderDetailPage extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      body: BlocBuilder<OrderDetailBloc, OrderDetailState>(
+      body: BlocConsumer<OrderDetailBloc, OrderDetailState>(
+        listener: (context, state) {
+          if (state is OrderDetailError) {
+            context.showErrorDialog(
+              title: 'Error',
+              message: state.message,
+            );
+          }
+          if (state is OrderDetailLoaded && state.order.status == OrderStatus.cancelled) {
+            context.showSuccessDialog(
+              title: 'Order Cancelled',
+              message: 'Your order has been cancelled successfully.',
+            );
+          }
+        },
         builder: (context, state) {
           if (state is OrderDetailLoading) return const AppLoading();
           if (state is OrderDetailError) {
@@ -206,7 +220,12 @@ class OrderDetailPage extends StatelessWidget {
                       variant: AppButtonVariant.danger,
                       icon: Icons.cancel_outlined,
                       onPressed: () async {
-                        final confirmed = await context.showConfirmDialog(title: 'Cancel Order', message: 'Are you sure you want to cancel this order?');
+                        final confirmed = await context.showConfirmDialog(
+                          title: 'Cancel Order',
+                          message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+                          confirmLabel: 'Cancel Order',
+                          cancelLabel: 'Keep Order',
+                        );
                         if (confirmed == true && context.mounted) {
                           context.read<OrderDetailBloc>().add(OrderCancelRequested(order.id));
                         }

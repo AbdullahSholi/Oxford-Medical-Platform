@@ -74,9 +74,18 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            context.showSnackBar(state.message, isError: true);
+            context.showErrorDialog(
+              title: 'Registration Failed',
+              message: state.message,
+            );
           } else if (state is AuthRegistrationSuccess) {
-            context.go(RouteNames.pendingApproval);
+            context.showSuccessDialog(
+              title: 'Registration Successful',
+              message: 'Your account has been created! Please wait for admin approval.',
+              confirmLabel: 'Got it',
+            ).then((_) {
+              if (context.mounted) context.go(RouteNames.pendingApproval);
+            });
           }
         },
         child: SingleChildScrollView(
