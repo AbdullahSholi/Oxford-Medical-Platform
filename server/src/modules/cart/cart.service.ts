@@ -123,13 +123,44 @@ export class CartService {
         if (userUsage >= discount.perUserLimit) {
             throw new AppError('INVALID_COUPON', 'You have already used this coupon', 400);
         }
+        return discount;
+    }
+
+    async applyCoupon(doctorId: string, code: string) {
+        const discount = await this.validateCoupon(doctorId, code);
+
+        // Get the full cart with items
+        await this.repo.ensureCart(doctorId);
+        const cart = await this.repo.getCart(doctorId);
+        if (!cart) throw new AppError('EMPTY_CART', 'No cart found', 400);
+
+        // Calculate subtotal from cart items
+        const subtotal = cart.items.reduce((sum: number, item: any) => {
+            const price = item.product?.salePrice ?? item.product?.price ?? 0;
+            return sum + Number(price) * item.quantity;
+        }, 0);
+
+        // Calculate discount amount
+        let discountAmount = 0;
+        if (discount.minOrderAmount && subtotal < Number(discount.minOrderAmount)) {
+            throw new AppError('INVALID_COUPON', `Minimum order amount is ${discount.minOrderAmount}`, 400);
+        } else if (discount.type === 'percentage') {
+            discountAmount = subtotal * (Number(discount.value) / 100);
+            if (discount.maxDiscount) {
+                discountAmount = Math.min(discountAmount, Number(discount.maxDiscount));
+            }
+        } else {
+            discountAmount = Number(discount.value);
+        }
+
+        const total = Math.max(subtotal - discountAmount, 0);
+
         return {
-            code: discount.code,
-            type: discount.type,
-            value: discount.value,
-            description: discount.description,
-            minOrderAmount: discount.minOrderAmount,
-            maxDiscount: discount.maxDiscount,
+            ...cart,
+            subtotal,
+            discount: discountAmount,
+            total,
+            couponCode: discount.code,
         };
     }
 

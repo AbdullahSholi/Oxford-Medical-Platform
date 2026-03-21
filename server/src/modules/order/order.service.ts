@@ -101,9 +101,10 @@ export class OrderService {
             // Step 4: Lock & validate discount
             let discountRecord: DiscountRow | null = null;
             if (input.discountCode) {
+                const discountCode = input.discountCode.toUpperCase().trim();
                 const discounts = await tx.$queryRaw<DiscountRow[]>`
                     SELECT * FROM discounts
-                    WHERE code = ${input.discountCode}
+                    WHERE code = ${discountCode}
                     AND is_active = true
                     AND starts_at <= NOW()
                     AND ends_at > NOW()

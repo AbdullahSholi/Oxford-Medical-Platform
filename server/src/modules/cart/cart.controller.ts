@@ -27,8 +27,8 @@ export class CartController {
     };
 
     applyCoupon = async (req: Request, res: Response): Promise<void> => {
-        const coupon = await this.service.validateCoupon(req.user!.id, req.body.code);
-        ApiResponse.success(res, { data: coupon, message: 'Coupon applied successfully' });
+        const cart = await this.service.applyCoupon(req.user!.id, req.body.code);
+        ApiResponse.success(res, { data: cart, message: 'Coupon applied successfully' });
     };
 
     removeCoupon = async (_req: Request, res: Response): Promise<void> => {
