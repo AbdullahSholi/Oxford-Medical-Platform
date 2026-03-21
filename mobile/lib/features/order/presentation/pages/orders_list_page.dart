@@ -103,7 +103,7 @@ class _OrdersListPageState extends State<OrdersListPage> {
               }
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, AppSpacing.xxl,
+                  AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, 100,
                 ),
                 itemCount: state.orders.length,
                 separatorBuilder: (_, __) => AppSpacing.verticalGapMd,

@@ -125,7 +125,7 @@ class HomePage extends StatelessWidget {
                         AppSpacing.verticalGapXl,
                       ],
                       BestSellersSection(products: state.bestSellers),
-                      AppSpacing.verticalGapXxl,
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),

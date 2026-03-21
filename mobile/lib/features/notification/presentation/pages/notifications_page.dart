@@ -70,7 +70,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(0, AppSpacing.sm, 0, 100),
               itemCount: state.notifications.length,
               itemBuilder: (context, index) {
                 final n = state.notifications[index];

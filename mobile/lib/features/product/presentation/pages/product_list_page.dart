@@ -91,7 +91,7 @@ class _ProductListPageState extends State<ProductListPage> {
             }
             return GridView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 100),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 0.68,
